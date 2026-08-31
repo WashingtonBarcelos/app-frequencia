@@ -78,3 +78,29 @@ export function tipoSugerido() {
   if (dia === 'Sun') return 'domingo';
   return 'outro';
 }
+
+/* ---------------------------------------------
+   Geração de CSV para Excel e Google Sheets.
+   Ponto e vírgula porque o Excel em português usa
+   vírgula como separador decimal; o BOM no início
+   é o que faz os acentos aparecerem certos.
+--------------------------------------------- */
+
+function escaparCelula(valor) {
+  const texto = valor === null || valor === undefined ? '' : String(valor);
+  return /[";\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
+}
+
+export function baixarCSV(nomeArquivo, linhas) {
+  const conteudo = linhas.map((linha) => linha.map(escaparCelula).join(';')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + conteudo], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

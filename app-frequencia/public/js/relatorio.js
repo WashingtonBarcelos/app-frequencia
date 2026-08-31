@@ -1,4 +1,4 @@
-import { api, exigirSessao, dataBonita } from './api.js';
+import { api, exigirSessao, dataBonita, baixarCSV, hoje } from './api.js';
 
 const usuario = exigirSessao();
 
@@ -7,6 +7,7 @@ const fim        = document.getElementById('fim');
 const btnFiltrar = document.getElementById('filtrar');
 const btnLimpar  = document.getElementById('limpar-periodo');
 const btnPdf     = document.getElementById('pdf');
+const btnPlanilha = document.getElementById('planilha');
 const resumoEl   = document.getElementById('resumo');
 const ultimoEl   = document.getElementById('ultimo');
 const statusEl   = document.getElementById('status');
@@ -106,6 +107,61 @@ function desenhar(dados) {
   geradoEl.textContent = `Gerado em ${agora} por ${usuario.nome}.`;
 }
 
+async function baixarPlanilha() {
+  btnPlanilha.disabled = true;
+  btnPlanilha.textContent = 'Gerando';
+
+  try {
+    const parametros = new URLSearchParams();
+    if (inicio.value) parametros.set('inicio', inicio.value);
+    if (fim.value) parametros.set('fim', fim.value);
+
+    const { encontros, linhas } = await api(`/api/exportar?${parametros}`);
+
+    if (!encontros.length) {
+      mostrarErro('Nenhum encontro no período escolhido.');
+      return;
+    }
+
+    const cabecalho = [
+      'Nome',
+      'Tipo',
+      ...encontros.map((e) => `${dataBonita(e.data)} (${e.tipo})`),
+      'Presenças',
+      'Encontros',
+      'Frequência %'
+    ];
+
+    const corpo = linhas.map((l) => [
+      l.nome,
+      l.tipo,
+      ...l.celulas,
+      l.presencas,
+      l.contados,
+      l.percentual === null ? '' : l.percentual
+    ]);
+
+    const rodape = [
+      ['', ''],
+      ['Presentes por encontro', '', ...encontros.map((e, i) =>
+        linhas.filter((l) => l.celulas[i] === 'P').length)],
+      ['Chamada preenchida por', '', ...encontros.map((e) => e.preenchido_por_nome || '—')]
+    ];
+
+    baixarCSV(`frequencia-${hoje()}.csv`, [cabecalho, ...corpo, ...rodape]);
+  } catch (e) {
+    mostrarErro(e.message);
+  } finally {
+    btnPlanilha.disabled = false;
+    btnPlanilha.textContent = 'Planilha';
+  }
+}
+
+function mostrarErro(texto) {
+  geradoEl.textContent = texto;
+}
+
+btnPlanilha.addEventListener('click', baixarPlanilha);
 btnFiltrar.addEventListener('click', carregar);
 btnPdf.addEventListener('click', () => window.print());
 btnLimpar.addEventListener('click', () => {

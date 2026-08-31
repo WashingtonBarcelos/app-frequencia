@@ -69,14 +69,29 @@ export function dataBonita(valor) {
   return `${dia}/${mes}/${ano}`;
 }
 
-// Sugere domingo ou quarta conforme o dia de hoje.
-export function tipoSugerido() {
-  const dia = new Date().toLocaleDateString('en-US', {
-    timeZone: 'America/Sao_Paulo', weekday: 'short'
-  });
-  if (dia === 'Wed') return 'quarta';
-  if (dia === 'Sun') return 'domingo';
-  return 'outro';
+// Descobre o encontro mais recente: hoje, se for domingo ou quarta;
+// senão, o último que passou. Na segunda-feira você quase sempre está
+// lançando a chamada do domingo.
+export function encontroSugerido() {
+  const agora = new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
+  );
+
+  // 0 = domingo, 3 = quarta
+  for (let recuo = 0; recuo < 7; recuo++) {
+    const alvo = new Date(agora);
+    alvo.setDate(agora.getDate() - recuo);
+    const diaSemana = alvo.getDay();
+
+    if (diaSemana === 0 || diaSemana === 3) {
+      return {
+        data: alvo.toLocaleDateString('en-CA'),
+        tipo: diaSemana === 0 ? 'domingo' : 'quarta'
+      };
+    }
+  }
+
+  return { data: hoje(), tipo: 'outro' };
 }
 
 /* ---------------------------------------------

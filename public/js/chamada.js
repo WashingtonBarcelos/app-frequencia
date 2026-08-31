@@ -1,4 +1,4 @@
-import { api, exigirSessao, hoje, tipoSugerido, dataBonita } from './api.js';
+import { api, exigirSessao, encontroSugerido, dataBonita } from './api.js';
 
 const usuario = exigirSessao();
 
@@ -19,12 +19,13 @@ let abaAtiva = 'membro';
 let encontroId = null;
 
 nomeUsuario.textContent = usuario.nome;
-campoData.value = hoje();
-campoTipo.value = tipoSugerido();
+const sugestao = encontroSugerido();
+campoData.value = sugestao.data;
+campoTipo.value = sugestao.tipo;
 
-function mostrarAviso(texto, ok = false) {
+function mostrarAviso(texto, tom = 'erro') {
   aviso.textContent = texto;
-  aviso.className = ok ? 'aviso ok' : 'aviso';
+  aviso.className = `aviso ${tom}`;
   aviso.hidden = !texto;
 }
 
@@ -47,7 +48,7 @@ async function carregar() {
       if (presencas.some((p) => p.marcado)) {
         mostrarAviso(
           `Chamada já registrada por ${encontro.preenchido_por_nome || 'alguém'}. ` +
-          `Você pode corrigir e salvar de novo.`
+          `Você pode corrigir e salvar de novo.`, 'info'
         );
       }
     } else {
@@ -119,7 +120,7 @@ campoTipo.addEventListener('change', carregar);
 botaoLimpar.addEventListener('click', () => {
   pessoas.forEach((p) => { p.presente = false; });
   desenhar();
-  mostrarAviso('Marcações apagadas na tela. Salve para gravar.');
+  mostrarAviso('Marcações apagadas na tela. Salve para gravar.', 'info');
 });
 
 botaoSalvar.addEventListener('click', async () => {
@@ -145,7 +146,7 @@ botaoSalvar.addEventListener('click', async () => {
 
     const presentes = pessoas.filter((p) => p.presente).length;
     mostrarAviso(
-      `Chamada de ${dataBonita(campoData.value)} salva. ${presentes} presentes.`, true
+      `Chamada de ${dataBonita(campoData.value)} salva. ${presentes} presentes.`, 'ok'
     );
     carregarRecentes();
   } catch (e) {
@@ -194,7 +195,7 @@ recentesEl.addEventListener('click', async (evento) => {
 
   try {
     await api(`/api/encontros?id=${excluir.dataset.excluir}`, { metodo: 'DELETE' });
-    mostrarAviso('Chamada excluída.', true);
+    mostrarAviso('Chamada excluída.', 'ok');
     carregarRecentes();
     carregar();
   } catch (e) {

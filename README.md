@@ -87,3 +87,16 @@ Arquivos"; no computador, "Salvar como PDF".
 ## Padrão da chamada
 
 Todo mundo começa como ausente. Marca-se quem veio.
+
+## Planilha
+
+O botão "Planilha" no relatório baixa um CSV com a grade completa:
+uma linha por pessoa, uma coluna por encontro, `P` para presente e
+`F` para falta. Célula vazia significa que a pessoa não estava na
+lista naquele encontro.
+
+Abre direto no Excel e no Google Sheets. O separador é ponto e
+vírgula e o arquivo começa com BOM, que é o que faz os acentos
+aparecerem corretamente no Excel em português.
+
+O filtro de período do relatório também vale para a planilha.
